@@ -13,60 +13,66 @@ function EditPortfolio() {
         gitHub: ''
     });
 
-    const handleChange = e => {
+    const handleChange = (e) => {
         setPortfolio({ ...portfolio, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = async e => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+
         const data = {
             ...portfolio,
-            skills: portfolio.skills.split(','),
-            certifications: portfolio.certifications.split(','),
-            projects: portfolio.projects.split(','),
-            education: portfolio.education.split(','),
-            experience: portfolio.experience.split(',')
+            skills: portfolio.skills.split(',').map(s => s.trim()),
+            certifications: portfolio.certifications.split(',').map(c => c.trim()),
+            projects: portfolio.projects.split(',').map(p => p.trim()),
+            education: portfolio.education.split(',').map(e => e.trim()),
+            experience: portfolio.experience.split(',').map(e => e.trim())
         };
+
         try {
-            const res = await API.post('/portfolio/save', data);
-            alert('Portfolio saved!');
+            await API.post('/portfolio/save', data);
+            alert('Portfolio saved successfully!');
         } catch (err) {
-            alert('Failed to save portfolio.');
+            console.error(err);
+            alert('Failed to save portfolio');
         }
     };
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await API.get('/portfolio/my');
-                const data = res.data;
+        API.get('/portfolio/my')
+            .then((res) => {
+                const p = res.data;
                 setPortfolio({
-                    ...data,
-                    skills: data.skills.join(','),
-                    certifications: data.certifications.join(','),
-                    projects: data.projects.join(','),
-                    education: data.education.join(','),
-                    experience: data.experience.join(',')
+                    summary: p.summary || '',
+                    skills: p.skills ? p.skills.join(', ') : '',
+                    certifications: p.certifications ? p.certifications.join(', ') : '',
+                    projects: p.projects ? p.projects.join(', ') : '',
+                    education: p.education ? p.education.join(', ') : '',
+                    experience: p.experience ? p.experience.join(', ') : '',
+                    linkedIn: p.linkedIn || '',
+                    gitHub: p.gitHub || ''
                 });
-            } catch (err) {
-                console.log('No portfolio found yet.');
-            }
-        };
-        fetchData();
+            })
+            .catch(() => {
+                console.log('No existing portfolio. Creating new.');
+            });
     }, []);
 
     return (
-        <form onSubmit={handleSubmit}>
-            <h2>Edit Portfolio</h2>
-            <textarea name="summary" placeholder="Summary" value={portfolio.summary} onChange={handleChange} />
-            <input name="skills" placeholder="Skills (comma separated)" value={portfolio.skills} onChange={handleChange} />
-            <input name="certifications" placeholder="Certifications" value={portfolio.certifications} onChange={handleChange} />
-            <input name="projects" placeholder="Projects" value={portfolio.projects} onChange={handleChange} />
-            <input name="education" placeholder="Education" value={portfolio.education} onChange={handleChange} />
-            <input name="experience" placeholder="Experience" value={portfolio.experience} onChange={handleChange} />
-            <input name="linkedIn" placeholder="LinkedIn URL" value={portfolio.linkedIn} onChange={handleChange} />
-            <input name="gitHub" placeholder="GitHub URL" value={portfolio.gitHub} onChange={handleChange} />
-            <button type="submit">Save</button>
+        <form onSubmit={handleSubmit} style={{ padding: '30px' }}>
+            <h2>Edit Your Portfolio</h2>
+
+            <textarea name="summary" placeholder="Summary" value={portfolio.summary} onChange={handleChange} rows={4} /><br />
+
+            <input name="skills" placeholder="Skills (comma-separated)" value={portfolio.skills} onChange={handleChange} /><br />
+            <input name="certifications" placeholder="Certifications" value={portfolio.certifications} onChange={handleChange} /><br />
+            <input name="projects" placeholder="Projects" value={portfolio.projects} onChange={handleChange} /><br />
+            <input name="education" placeholder="Education" value={portfolio.education} onChange={handleChange} /><br />
+            <input name="experience" placeholder="Experience" value={portfolio.experience} onChange={handleChange} /><br />
+            <input name="linkedIn" placeholder="LinkedIn URL" value={portfolio.linkedIn} onChange={handleChange} /><br />
+            <input name="gitHub" placeholder="GitHub URL" value={portfolio.gitHub} onChange={handleChange} /><br />
+
+            <button type="submit">Save Portfolio</button>
         </form>
     );
 }
